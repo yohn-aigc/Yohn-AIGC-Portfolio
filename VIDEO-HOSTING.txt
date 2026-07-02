@@ -1,0 +1,89 @@
+============================================================
+ 视频托管到 Cloudflare R2 —— 操作说明（VIDEO-HOSTING）
+============================================================
+
+本站的 HTML 与所有图片（封面 poster、案例图等）继续留在 GitHub / 本地，
+只把体积大的短片 / 背景视频（.mp4）托管到 Cloudflare R2（或任意 CDN / 对象存储）。
+切换方式：只改 dist/index.html 顶部 window.__CONTENT__ 里的一个字段 mediaBase。
+
+★ 资源目录已统一到 assets/ 下（重构 v1）：
+    图片 → assets/images/...   视频 → assets/videos/...   图标 → assets/icons/...
+  视频的相对路径也随之变成 assets/videos/... （见下方清单）。
+
+------------------------------------------------------------
+ 一、如何切到 R2（改 dist/index.html 的 mediaBase）
+------------------------------------------------------------
+1. 用记事本打开 dist/index.html，在最上方找到这一段（第 25~32 行附近）：
+
+       window.__CONTENT__ = {
+         ...
+         mediaBase: "",
+         ...
+       };
+
+2. 把 mediaBase 的值从空串 "" 改成你的 R2 公开访问基址，例如：
+
+         mediaBase: "https://pub-xxxx.r2.dev/",
+
+   （xxxx 换成你自己的 R2 公开桶域名；末尾带不带 "/" 都可以，代码会自动处理。）
+
+3. 保存、刷新浏览器即可 —— 所有视频改从 R2 加载，图片和文案不变。
+   想改回本地播放，把 mediaBase 再改回空串 "" 即可。
+
+   拼接规则：最终视频 URL = mediaBase + 下面列出的相对路径。
+     例：mediaBase="https://pub-xxxx.r2.dev/" + "assets/videos/film/film-2.mp4"
+        => https://pub-xxxx.r2.dev/assets/videos/film/film-2.mp4
+   mediaBase 为空 "" 时，等价于本地相对路径 "./assets/videos/film/film-2.mp4"（当前行为）。
+
+------------------------------------------------------------
+ 二、需要上传到 R2 的全部视频（保持这个相对目录结构，逐条上传）
+------------------------------------------------------------
+   根 / 背景视频：
+     assets/videos/hero/hero-bg.mp4
+     assets/videos/about/about-left.mp4
+     assets/videos/works/works-transition.mp4
+
+   assets/videos/works/ 分类背景视频：
+     assets/videos/works/bg-02.mp4
+     assets/videos/works/bg-03.mp4
+     assets/videos/works/bg-04.mp4
+
+   assets/videos/film/ （AI 短片，5 条）：
+     assets/videos/film/film-1.mp4
+     assets/videos/film/film-2.mp4
+     assets/videos/film/film-3.mp4
+     assets/videos/film/film-4.mp4
+     assets/videos/film/film-5.mp4
+
+   assets/videos/character/ （AI 角色，5 条）：
+     assets/videos/character/character-1.mp4
+     assets/videos/character/character-2.mp4
+     assets/videos/character/character-3.mp4
+     assets/videos/character/character-4.mp4
+     assets/videos/character/character-5.mp4
+
+   assets/videos/lab/ （AI Creative Lab · Ads Exploration，3 条）：
+     assets/videos/lab/ads-1.mp4
+     assets/videos/lab/ads-2.mp4
+     assets/videos/lab/ads-3.mp4
+
+   assets/videos/lab/ （AI Creative Lab · Visual Exploration，3 条）：
+     assets/videos/lab/visual-1.mp4
+     assets/videos/lab/visual-2.mp4
+     assets/videos/lab/visual-3.mp4
+
+   合计 22 条视频。
+
+------------------------------------------------------------
+ 三、重要提醒
+------------------------------------------------------------
+ · R2 里必须保持与上面完全相同的相对路径结构（含子目录），
+   例如 assets/videos/film/film-2.mp4 要放在桶内的 assets/videos/film/ 下。
+   因为最终 URL = mediaBase + 该相对路径，路径对不上视频就 404。
+ · 视频缺失（404 / 未上传）时页面会优雅回退到封面图，不会出黑框或报错，
+   所以可以先上传已有的几条，其余日后补上，逐步生效。
+ · 封面图（poster）和所有图片都不走 mediaBase，永远从本地 / GitHub 加载，
+   无需上传到 R2。
+ · R2 桶需开启公开访问（Public Development URL 或自定义域名），
+   并确保允许被本站域名跨域加载（CORS：Access-Control-Allow-Origin）。
+============================================================
